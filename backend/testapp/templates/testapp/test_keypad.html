@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="{% if lang == 'ES' %}es{% else %}en{% endif %}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test — PPST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Stimulus overlay (dark, shown during sequence) ── */
+    .stimulus-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 50;
+      background: #0d1117;
+      align-items: center;
+      justify-content: center;
+    }
+    .stimulus-overlay.active { display: flex; }
+
+    .stimulus-item {
+      font-family: 'Sora', sans-serif;
+      font-size: 9rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.04em;
+      animation: stimPop .25s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes stimPop {
+      from { opacity: 0; transform: scale(.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Response UI ── */
+    .response-ui {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      animation: fadeIn .3s ease both;
+    }
+    .response-ui.visible { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .prompt-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 28px;
+    }
+
+    /* Keypad */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 88px);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    #letterkeypad { display: none; }
+    .mixed-mode #letterkeypad { display: grid; }
+    .mixed-mode #numkeypad { display: grid; }
+
+    .key {
+      width: 88px; height: 88px;
+      background: #f1f5f9;
+      border: none; border-radius: 14px;
+      font-family: 'Sora', sans-serif;
+      font-size: 1.6rem; font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      position: relative;
+      transition: background .15s, color .15s, transform .1s, box-shadow .15s;
+    }
+    .key:hover  { background: #eef2ff; color: #4f46e5; }
+    .key:active { transform: scale(.92); }
+    .key.selected {
+      background: #4f46e5; color: #fff;
+      box-shadow: 0 4px 16px rgba(79,70,229,.35);
+    }
+
+    .keypad-container {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Submit */
+    .btn-submit.ready {
+      background: #4f46e5; color: #fff;
+      font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem;
+      padding: 14px 60px; border-radius: 16px;
+      border: none; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(79,70,229,.35);
+      transition: background .18s, color .18s, box-shadow .18s, transform .12s;
+    }
+    .btn-submit.ready:hover  { background: #4338ca; }
+    .btn-submit.ready:active { transform: scale(.97); }
+  </style>
+</head>
+<body>
+
+  <!-- Stimulus overlay -->
+  <div class="stimulus-overlay" id="overlay">
+    <div class="stimulus-item" id="stim-item"></div>
+  </div>
+
+  <!-- Response UI -->
+  <div class="response-ui" id="response-ui">
+    <p class="prompt-label">{% if lang == 'es' %}Seleccione los elementos en orden{% else %}Select the stimulus items in order{% endif %}</p>
+
+    <div class="keypad-container">
+      <div class="keypad" id="numkeypad">
+        <button class="key" data-value="1">1</button>
+        <button class="key" data-value="2">2</button>
+        <button class="key" data-value="3">3</button>
+        <button class="key" data-value="4">4</button>
+        <button class="key" data-value="5">5</button>
+        <button class="key" data-value="6">6</button>
+        <button class="key" data-value="7">7</button>
+        <button class="key" data-value="8">8</button>
+        <button class="key" data-value="9">9</button>
+      </div>
+      <div class="keypad" id="letterkeypad">
+        <button class="key" data-value="A">A</button>
+        <button class="key" data-value="E">E</button>
+        <button class="key" data-value="I">I</button>
+        <button class="key" data-value="O">O</button>
+        <button class="key" data-value="Q">Q</button>
+        <button class="key" data-value="R">R</button>
+        <button class="key" data-value="S">S</button>
+        <button class="key" data-value="U">U</button>
+        <button class="key" data-value="Y">Y</button>
+      </div>
+    </div>
+
+    <form method="post" action="/testapp/{{link}}/submit/" id="submit-form">
+      {% csrf_token %}
+      <input type="hidden" name="response" id="response-input" value="">
+      <button type="submit" class="btn-submit ready" id="btn-submit">{% if lang == 'es' %}Enviar{% else %}Submit{% endif %}</button>
+    </form>
+  </div>
+
+  <script>
+    const LANG = '{{ lang }}';
+    function t(en, es) { return LANG === 'ES' ? es : en; }
+
+    const stimuli = {{ stimuli_json|safe }};
+    const digitStimuli = stimuli.filter(s => s.stimulus_type === 'test_digits');
+    const mixedStimuli = stimuli.filter(s => s.stimulus_type === 'test_mixed');
+
+    const practiceDigits = [
+      { sequence: ['8', '2', '6', '1'], stimulus_type: 'practice_digits', span: 4 },
+      { sequence: ['5', '9', '3', '7', '2'], stimulus_type: 'practice_digits', span: 5 },
+    ];
+    const practiceMixed = [
+      { sequence: ['3', 'A', '7', 'Q'], stimulus_type: 'practice_mixed', span: 4 },
+      { sequence: ['5', 'E', '2', 'R', 'U'], stimulus_type: 'practice_mixed', span: 5 },
+    ];
+    const allTrials = practiceDigits.concat(digitStimuli).concat(practiceMixed).concat(mixedStimuli);
+
+    let currentIndex = 0;
+    let currentSequence = [];
+    let currentStimulusType = '';
+    let trialStartAt = 0;
+    let previousClickAt = 0;
+    let trialResults = [];
+    let clickLatencies = [];
+
+    function speak(text) {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = '{{ lang }}' === 'es' ? 'es-US' : 'en-US';
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.lang.startsWith(utt.lang) && v.localService);
+      if (preferred) utt.voice = preferred;
+      utt.rate = 0.85;
+      window.speechSynthesis.speak(utt);
+}
+
+    function nextTrial() {
+      if (currentIndex >= allTrials.length) {
+        endTest();
+        return;
+      }
+
+      const stimulus = allTrials[currentIndex];
+      currentSequence = stimulus.sequence;
+      currentStimulusType = stimulus.stimulus_type;
+
+      const container = document.getElementById('response-ui');
+      if (stimulus.stimulus_type.includes('mixed')) {
+        container.classList.add('mixed-mode');
+      } else {
+        container.classList.remove('mixed-mode');
+      }
+
+      runSequence(currentSequence);
+    }
+    const DISPLAY_MS = 1200;
+    const BLANK_MS   = 400;
+
+    let selected = [];
+
+    const overlay   = document.getElementById('overlay');
+    const stimItem  = document.getElementById('stim-item');
+    const respUI    = document.getElementById('response-ui');
+    const btnSubmit = document.getElementById('btn-submit');
+    const respInput = document.getElementById('response-input');
+
+    function runSequence(sequence) {
+      let idx = 0;
+
+      stimItem.textContent = '';
+      overlay.classList.add('active');
+      respUI.classList.remove('visible');
+
+      function showNext() {
+        if (idx >= sequence.length) {
+          overlay.classList.remove('active');
+          respUI.classList.add('visible');
+          trialStartAt = performance.now();
+          return;
+        }
+
+        stimItem.style.animation = 'none';
+        stimItem.offsetHeight;
+        stimItem.style.animation = '';
+        stimItem.textContent = sequence[idx];
+        speak(sequence[idx]);
+        idx++;
+
+        setTimeout(showNext, DISPLAY_MS + BLANK_MS);
+      }
+
+      setTimeout(showNext, 700);
+    }
+
+    function resetUI() {
+      selected = [];
+      clickLatencies = [];
+      previousClickAt = trialStartAt;
+      respInput.value = JSON.stringify(selected);
+    }
+
+    function computeSummary() {
+      const realTrials = trialResults.filter(r => !r.is_practice);
+      const numericTrials = realTrials.filter(r => r.kind === 'numeric');
+      const mixedTrials = realTrials.filter(r => r.kind === 'mixed');
+
+      return {
+        num_total_latency: numericTrials.reduce((sum, t) => sum + t.latency_ms, 0),
+        mix_total_latency: mixedTrials.reduce((sum, t) => sum + t.latency_ms, 0),
+        num_correct: numericTrials.filter(t => t.is_correct).length,
+        mix_correct: mixedTrials.filter(t => t.is_correct).length,
+        numeric_total_stimuli: numericTrials.length,
+        mixed_total_stimuli: mixedTrials.length,
+        trial_details: realTrials,
+      };
+    }
+
+    function endTest() {
+      const summary = computeSummary();
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      fetch('/testapp/{{link}}/submit/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(summary),
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to save test data.');
+        }
+        document.body.innerHTML = "<h1 style='text-align:center;margin-top:40vh;'>" + t('Your results have been submitted, you may now close this window', 'Sus resultados han sido enviados, puede cerrar esta ventana') + "</h1>";
+      })
+      .catch(err => {
+        document.body.innerHTML = "<h1 style='text-align:center;margin-top:40vh;'>" + t('Error submitting results: ', 'Error al enviar los resultados: ') + err.message + "</h1>";
+      });
+    }
+
+    // ── Key clicks ───────────────────────────────────────────────────
+    document.querySelectorAll('.keypad').forEach(pad => {
+      pad.addEventListener('click', function(e) {
+        const btn = e.target.closest('.key');
+        if (!btn) return;
+
+        const now = performance.now();
+        const delta = selected.length === 0
+          ? Math.round(now - trialStartAt)
+          : Math.round(now - previousClickAt);
+        previousClickAt = now;
+        clickLatencies.push(Math.max(0, delta));
+
+        selected.push(btn.dataset.value);
+        btn.classList.add('selected');
+        setTimeout(() => {
+          btn.classList.remove('selected');
+        }, 300);
+
+        respInput.value = JSON.stringify(selected);
+      });
+    });
+
+    document.getElementById('submit-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const isCorrect = selected.length === currentSequence.length
+        && selected.every((value, idx) => value === currentSequence[idx]);
+      const latencyMs = Math.max(0, Math.round(performance.now() - trialStartAt));
+      const isPractice = currentStimulusType.startsWith('practice_');
+      const kind = currentStimulusType.includes('mixed') ? 'mixed' : 'numeric';
+
+      const clickComparisons = currentSequence.map((correctChar, idx) => {
+        const clickedChar = selected[idx] ?? null;
+        return {
+          click_order: idx + 1,
+          correct_char: correctChar,
+          clicked_char: clickedChar,
+          is_correct: clickedChar === correctChar,
+          latency_since_previous_click_ms: clickLatencies[idx] ?? null,
+        };
+      });
+
+      trialResults.push({
+        is_practice: isPractice,
+        kind: kind,
+        stimulus_type: currentStimulusType,
+        stimulus_sequence: currentSequence,
+        clicked_sequence: selected.slice(),
+        click_comparisons: clickComparisons,
+        is_correct: isCorrect,
+        latency_ms: latencyMs,
+      });
+
+      currentIndex++;
+      resetUI();
+      nextTrial();
+    });
+
+    nextTrial();
+    window.addEventListener('beforeunload', () => window.speechSynthesis.cancel());
+  </script>
+</body>
+</html>

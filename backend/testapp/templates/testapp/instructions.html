@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{% if lang == 'ES' %}es{% else %}en{% endif %}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instructions — PPST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      background: #0d1117;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 32px 64px rgba(0,0,0,.45);
+      animation: cardIn .5s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: scale(.94) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Coloured header */
+    .card-header {
+      background: #4f46e5;
+      padding: 32px 28px 28px;
+      text-align: center;
+    }
+    .header-icon {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,.18);
+      border-radius: 18px;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .header-icon svg { width: 32px; height: 32px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .card-header h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.5rem; font-weight: 800; color: #fff;
+      margin-bottom: 4px;
+    }
+    .card-header p { font-size: .875rem; color: rgba(255,255,255,.7); }
+
+    /* Steps */
+    .steps { padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+
+    .step {
+      display: flex; gap: 16px; align-items: flex-start;
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 18px 20px;
+      border: 1px solid #f1f5f9;
+    }
+    .step-num {
+      min-width: 32px; height: 32px;
+      background: #eef2ff; color: #4f46e5;
+      font-family: 'Sora', sans-serif; font-weight: 800; font-size: .88rem;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid #e0e7ff;
+      flex-shrink: 0;
+    }
+    .step-text { font-size: .9rem; color: #475569; line-height: 1.65; }
+    .step-text strong { color: #0f172a; }
+
+    /* Language switcher */
+    .lang-switcher {
+      position: fixed; bottom: 20px; left: 20px;
+    }
+    .lang-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 14px; border-radius: 12px;
+      background: #fff; border: 1.5px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+      font-family: 'Sora', sans-serif; font-size: .8rem; font-weight: 700;
+      color: #64748b; text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+    .lang-back:hover { background: #f1f5f9; color: #334155; }
+    .lang-back svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+
+    /* TTS */
+    .tts-bar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding: 0 28px 12px;
+    }
+    .btn-tts {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .82rem; font-weight: 600; color: #4f46e5;
+      padding: 7px 14px; border-radius: 10px;
+      border: 1.5px solid #e0e7ff; background: #eef2ff;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: background .15s;
+    }
+    .btn-tts:hover { background: #e0e7ff; }
+    .btn-tts svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* CTA */
+    .cta { padding: 0 28px 28px; }
+    .btn-ready {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%;
+      background: #4f46e5; color: #fff;
+      font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.05rem;
+      padding: 16px; border-radius: 16px;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(79,70,229,.35);
+      transition: background .18s, box-shadow .18s, transform .12s;
+      letter-spacing: .01em;
+    }
+    .btn-ready:hover  { background: #4338ca; box-shadow: 0 10px 30px rgba(79,70,229,.45); }
+    .btn-ready:active { transform: scale(.98); }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="card-header">
+      <div class="header-icon">
+        <!-- hash / number icon -->
+        <svg viewBox="0 0 24 24">
+          <line x1="4" y1="9" x2="20" y2="9"/>
+          <line x1="4" y1="15" x2="20" y2="15"/>
+          <line x1="10" y1="3" x2="8" y2="21"/>
+          <line x1="16" y1="3" x2="14" y2="21"/>
+        </svg>
+      </div>
+      <h2>{% if lang == 'es' %}Práctica de Números{% else %}Number Practice{% endif %}</h2>
+      <p>{% if lang == 'es' %}Secuencias de dígitos{% else %}Digit sequences{% endif %}</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <p class="step-text">
+          {% if lang == 'es' %}
+            Cuando haga clic en <strong>¡Listo!</strong>, una secuencia de <strong>4 dígitos</strong> aparecerá en pantalla uno a la vez, con visualización y narración de audio.
+          {% else %}
+            When you click <strong>Ready!</strong>, a sequence of <strong>4 digits</strong> will appear on screen one at a time, with both visual display and audio narration.
+          {% endif %}
+        </p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p class="step-text">
+          {% if lang == 'es' %}
+            Después de la secuencia, aparecerá una cuadrícula. Seleccione cada elemento en el orden en que se mostró.
+          {% else %}
+            After the sequence, a grid will appear. Select each item in the order it was shown.
+          {% endif %}
+        </p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p class="step-text">
+          {% if lang == 'es' %}
+            Completará <strong>2 secuencias de práctica</strong> para familiarizarse antes de que comience la prueba real.
+          {% else %}
+            You will complete <strong>2 practice sequences</strong> to get familiar before the real test begins.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="tts-bar">
+      <button class="btn-tts" id="btn-tts" onclick="toggleSpeak()">
+        <svg viewBox="0 0 24 24" id="tts-icon">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <span id="tts-label">{% if lang == 'es' %}Leer en voz alta{% else %}Read aloud{% endif %}</span>
+      </button>
+    </div>
+
+    <div class="cta">
+      <a href="/testapp/{{link}}/keypad/" class="btn-ready">{% if lang == 'es' %}¡Listo!{% else %}Ready!{% endif %}</a>
+    </div>
+  </div>
+
+  <script>
+    const lang = '{{ lang }}';
+
+    const ttsText = lang === 'es'
+      ? [
+          'Práctica de Números. Secuencias de dígitos.',
+          'Paso 1: Cuando haga clic en Listo, una secuencia de 4 dígitos aparecerá en pantalla uno a la vez, con visualización y narración de audio.',
+          'Paso 2: Después de la secuencia, aparecerá una cuadrícula. Seleccione cada elemento en el orden en que se mostró.',
+          'Paso 3: Completará 2 secuencias de práctica para familiarizarse antes de que comience la prueba real.',
+        ].join(' ')
+      : [
+          'Number Practice. Digit sequences.',
+          'Step 1: When you click Ready, a sequence of 4 digits will appear on screen one at a time, with both visual display and audio narration.',
+          'Step 2: After the sequence, a grid will appear. Select each item in the order it was shown.',
+          'Step 3: You will complete 2 practice sequences to get familiar before the real test begins.',
+        ].join(' ');
+
+    let speaking = false;
+
+    function toggleSpeak() {
+      if (speaking) {
+        player.pause();
+        setSpeaking(false);
+      } else {
+        const utt = new SpeechSynthesisUtterance(ttsText);
+        utt.lang = lang === 'es' ? 'es-US' : 'en-US';
+        utt.rate = 0.92;
+        utt.pitch = 1;
+        utt.onend = () => setSpeaking(false);
+        utt.onerror = () => setSpeaking(false);
+        window.speechSynthesis.speak(utt);
+        setSpeaking(true);
+      }
+    }
+
+    function setSpeaking(val) {
+      speaking = val;
+      document.getElementById('tts-label').textContent = val
+        ? (lang === 'es' ? 'Detener' : 'Stop')
+        : (lang === 'es' ? 'Leer en voz alta' : 'Read aloud');
+    }
+
+    // Auto-speak on load
+    window.addEventListener('load', () => {
+      if ('speechSynthesis' in window) toggleSpeak();
+    });
+    window.addEventListener('beforeunload', () => window.speechSynthesis.cancel());
+  </script>
+</body>
+</html>

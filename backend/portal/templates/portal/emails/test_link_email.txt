@@ -1,0 +1,11 @@
+Hello,
+
+You have been invited by {{ doctor_username }} to take the {{ test_name }}.
+
+Start the test by opening this link:
+{{ test_url }}
+
+If the button does not work, copy and paste the link into your browser.
+
+Best,
+{{ test_name }} Team

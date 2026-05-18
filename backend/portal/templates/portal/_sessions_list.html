@@ -1,0 +1,21 @@
+{% for session in recent_sessions %}
+  <div class="session" onclick="openTestModal({{ session.test_id }})" style="cursor: pointer;">
+    <div class="avatar"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div class="sess-info">
+      <div class="sess-row1">
+        <span class="sess-id">{{ session.anon_id }}</span>
+        <span class="sess-date">{{ session.date }}</span>
+      </div>
+      <div class="sess-row2">
+        <span class="tag-status {{ session.status_class }}">{{ session.status_label }}</span>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <div class="session">
+    <div class="avatar"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div class="sess-info">
+      <div class="sess-row1"><span class="sess-id">No sessions found.</span></div>
+    </div>
+  </div>
+{% endfor %}
