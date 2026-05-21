@@ -1,7 +1,5 @@
 # Philadelphia Pointing Span Test (PPST)
 
-# Philadelphia Pointing Span Test (PPST)
-
 A Django-based web application for administering the Philadelphia Pointing Span Test, a clinical neuropsychological assessment tool. Built by a 7-person Agile team at Rowan University as a senior capstone project.
 
 ## Overview
